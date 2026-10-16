@@ -166,6 +166,8 @@ def main(args=None):
 if __name__ == '__main__':
     main()
 
+# "AutoDRIVE Simulator.exe" -force-d3d11
+
 # docker run --platform linux/amd64 --name penn-challenge --rm -it -p 4567:4567 -v "${PWD}/autodrive_devkit:/home/autodrive_devkit/src/autodrive_devkit" --entrypoint /bin/bash penn-challenge
 # source install/setup.bash
 # ros2 launch autodrive_roboracer bringup_headless.launch.py

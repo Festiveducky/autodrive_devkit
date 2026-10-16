@@ -1,5 +1,9 @@
 # AutoDRIVE Devkit
 
+## [▶ Watch the Demo on YouTube](https://youtu.be/wSOCw4L_oYo)
+
+[![Watch the AutoDRIVE Devkit demo on YouTube](https://img.youtube.com/vi/wSOCw4L_oYo/hqdefault.jpg)](https://youtu.be/wSOCw4L_oYo)
+
 <p align="justify">
 This directory hosts ROS 2 API (a meta-package), which supports modular algorithm development targetted towards autonomous driving. It uses client libraries for Python and C++, and can be therefore exploited by the users to develop their algorithms flexibly.
 </p>
@@ -76,6 +80,3 @@ This directory hosts ROS 2 API (a meta-package), which supports modular algorith
   ```bash
   $ ros2 run autodrive_roboracer teleop_keyboard
   ```
-
-- **Youtube Video Link**
-[text](https://youtu.be/wSOCw4L_oYo)

@@ -1,0 +1,31 @@
+# Edit these values, then restart the node. ROS command-line -p overrides work too.
+wall_follow_node:
+  ros__parameters:
+    # Speed: normalized throttle, NOT meters per second.
+    max_throttle: 0.20             # Straight-line limit (previously 0.12).
+    throttle_gain: 0.08            # Throttle per clear meter (previously 0.04).
+    turn_slowdown: 0.40            # Full steering reduces throttle by 40% (was 75%).
+    sharp_turn_throttle: 0.14      # Additional throttle cap at the sharpest turns.
+
+    # Turning: smaller lookahead / larger gain makes the car turn harder.
+    steering_gain: 1.0
+    min_lookahead: 0.6             # Meters, before sharp-turn scaling.
+    max_lookahead: 1.5
+    lookahead_gain: 0.5            # Lookahead = path distance times this gain, clamped.
+    sharp_turn_angle: 35.0         # Target angle in degrees where boost starts.
+    sharp_turn_full_angle: 70.0    # Target angle where full boost applies.
+    sharp_turn_steering_gain: 1.35 # Multiplier at full boost.
+    sharp_turn_lookahead_scale: 0.60 # Lookahead multiplier at full boost.
+
+    # Clearance and geometry.
+    clearance: 0.35                # Meters from LiDAR, includes car half-width.
+    stop_distance: 0.45
+    forward_angle: 80.0
+    wheelbase: 0.33
+    max_steering_angle: 0.52       # Radians at full steering command.
+
+    # Runtime and debug.
+    enabled: true
+    scan_timeout: 0.5
+    debug_period: 1.0
+    print_ranges: false

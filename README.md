@@ -1,5 +1,7 @@
 # AutoDRIVE Devkit
 
+> **My fastest lap: 13.3s**
+
 ## [▶ Watch the Demo on YouTube](https://youtu.be/wSOCw4L_oYo)
 
 [![Watch the AutoDRIVE Devkit demo on YouTube](https://img.youtube.com/vi/wSOCw4L_oYo/hqdefault.jpg)](https://youtu.be/wSOCw4L_oYo)

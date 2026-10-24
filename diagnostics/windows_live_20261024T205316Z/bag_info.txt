@@ -1,0 +1,22 @@
+
+Files:             bag_0.db3
+Bag size:          42.7 MiB
+Storage id:        sqlite3
+Duration:          487.874398028s
+Start:             Oct 24 2026 20:53:24.508771693 (1792875204.508771693)
+End:               Oct 24 2026 21:01:32.383169721 (1792875692.383169721)
+Messages:          70642
+Topic information: Topic: /autodrive/roboracer_1/odom | Type: nav_msgs/msg/Odometry | Count: 5434 | Serialization Format: cdr
+                   Topic: /autodrive/roboracer_1/lidar | Type: sensor_msgs/msg/LaserScan | Count: 5434 | Serialization Format: cdr
+                   Topic: /autodrive/roboracer_1/lap_count | Type: std_msgs/msg/Int32 | Count: 5434 | Serialization Format: cdr
+                   Topic: /autodrive/roboracer_1/imu | Type: sensor_msgs/msg/Imu | Count: 5434 | Serialization Format: cdr
+                   Topic: /autodrive/roboracer_1/last_lap_time | Type: std_msgs/msg/Float32 | Count: 5434 | Serialization Format: cdr
+                   Topic: /autodrive/roboracer_1/lap_time | Type: std_msgs/msg/Float32 | Count: 5434 | Serialization Format: cdr
+                   Topic: /autodrive/roboracer_1/collision_count | Type: std_msgs/msg/Int32 | Count: 5434 | Serialization Format: cdr
+                   Topic: /autodrive/roboracer_1/best_lap_time | Type: std_msgs/msg/Float32 | Count: 5434 | Serialization Format: cdr
+                   Topic: /tf | Type: tf2_msgs/msg/TFMessage | Count: 5434 | Serialization Format: cdr
+                   Topic: /autodrive/roboracer_1/steering | Type: std_msgs/msg/Float32 | Count: 5434 | Serialization Format: cdr
+                   Topic: /autodrive/roboracer_1/right_encoder | Type: sensor_msgs/msg/JointState | Count: 5434 | Serialization Format: cdr
+                   Topic: /autodrive/roboracer_1/throttle | Type: std_msgs/msg/Float32 | Count: 5434 | Serialization Format: cdr
+                   Topic: /autodrive/roboracer_1/left_encoder | Type: sensor_msgs/msg/JointState | Count: 5434 | Serialization Format: cdr
+

@@ -1,0 +1,21 @@
+stdin is not a terminal device. Keyboard handling disabled.[INFO] [1792875198.100417842] [rosbag2_recorder]: Press SPACE for pausing/resuming
+[INFO] [1792875198.223527564] [rosbag2_storage]: Opened database '/home/autodrive_devkit/src/autodrive_devkit/diagnostics/windows_live_20261024T205316Z/bag/bag_0.db3' for READ_WRITE.
+[INFO] [1792875198.229700084] [rosbag2_recorder]: Listening for topics...
+[INFO] [1792875198.229799463] [rosbag2_recorder]: Event publisher thread: Starting
+[INFO] [1792875198.232176808] [rosbag2_recorder]: Recording...
+[INFO] [1792875200.667237577] [rosbag2_recorder]: Subscribed to topic '/autodrive/roboracer_1/left_encoder'
+[INFO] [1792875200.694242959] [rosbag2_recorder]: Subscribed to topic '/autodrive/roboracer_1/throttle'
+[INFO] [1792875200.714160399] [rosbag2_recorder]: Subscribed to topic '/autodrive/roboracer_1/right_encoder'
+[INFO] [1792875200.732373104] [rosbag2_recorder]: Subscribed to topic '/autodrive/roboracer_1/steering'
+[INFO] [1792875200.771162445] [rosbag2_recorder]: Subscribed to topic '/tf'
+[INFO] [1792875200.884712748] [rosbag2_recorder]: Subscribed to topic '/autodrive/roboracer_1/best_lap_time'
+[INFO] [1792875200.899194579] [rosbag2_recorder]: Subscribed to topic '/autodrive/roboracer_1/collision_count'
+[INFO] [1792875200.911779077] [rosbag2_recorder]: Subscribed to topic '/autodrive/roboracer_1/lap_time'
+[INFO] [1792875200.926715064] [rosbag2_recorder]: Subscribed to topic '/autodrive/roboracer_1/last_lap_time'
+[INFO] [1792875200.944152748] [rosbag2_recorder]: Subscribed to topic '/autodrive/roboracer_1/imu'
+[INFO] [1792875200.958823343] [rosbag2_recorder]: Subscribed to topic '/autodrive/roboracer_1/lap_count'
+[INFO] [1792875200.976053941] [rosbag2_recorder]: Subscribed to topic '/autodrive/roboracer_1/lidar'
+[INFO] [1792875200.998422871] [rosbag2_recorder]: Subscribed to topic '/autodrive/roboracer_1/odom'
+[INFO] [1792875692.403870537] [rosbag2_cpp]: Writing remaining messages from cache to the bag. It may take a while
+[INFO] [1792875692.434812960] [rosbag2_recorder]: Event publisher thread: Exiting
+[INFO] [1792875692.438203373] [rosbag2_recorder]: Recording stopped

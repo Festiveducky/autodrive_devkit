@@ -28,6 +28,7 @@ setup(
             'autodrive_bridge = autodrive_roboracer.autodrive_bridge:main', # AutoDRIVE ROS 2 bridge
             'teleop_keyboard = autodrive_roboracer.teleop_keyboard:main', # Teleoperation with keyboard
             'wall_follow_node = autodrive_roboracer.wall_follow_node:main',
+            'sensor_diagnostics_node = autodrive_roboracer.sensor_diagnostics_node:main',
         ],
     },
 )

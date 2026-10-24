@@ -1,0 +1,11 @@
+stdin is not a terminal device. Keyboard handling disabled.[INFO] [1792875063.112092431] [rosbag2_recorder]: Press SPACE for pausing/resuming
+[INFO] [1792875063.351360312] [rosbag2_storage]: Opened database '/home/autodrive_devkit/src/autodrive_devkit/diagnostics/synthetic_full_20261024T205102Z/bag/bag_0.db3' for READ_WRITE.
+[INFO] [1792875063.360849592] [rosbag2_recorder]: Event publisher thread: Starting
+[INFO] [1792875063.361293166] [rosbag2_recorder]: Listening for topics...
+[INFO] [1792875063.366738004] [rosbag2_recorder]: Recording...
+[INFO] [1792875064.919796046] [rosbag2_recorder]: Subscribed to topic '/feature1_recording_test/imu'
+[INFO] [1792875064.956210137] [rosbag2_recorder]: Subscribed to topic '/feature1_recording_test/lidar'
+[INFO] [1792875064.957930426] [rosbag2_recorder]: All requested topics are subscribed. Stopping discovery...
+[INFO] [1792875072.635132680] [rosbag2_cpp]: Writing remaining messages from cache to the bag. It may take a while
+[INFO] [1792875072.655277915] [rosbag2_recorder]: Event publisher thread: Exiting
+[INFO] [1792875072.656941126] [rosbag2_recorder]: Recording stopped

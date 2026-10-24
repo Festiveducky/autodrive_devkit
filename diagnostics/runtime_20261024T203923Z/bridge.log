@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "src/gevent/greenlet.py", line 906, in gevent._gevent_cgreenlet.Greenlet.run
+  File "/usr/local/lib/python3.10/dist-packages/socketio/server.py", line 640, in _handle_event_internal
+    r = server._trigger_event(data[0], namespace, sid, *data[1:])
+  File "/usr/local/lib/python3.10/dist-packages/socketio/server.py", line 669, in _trigger_event
+    return self.handlers[namespace][event](*args)
+  File "/home/autodrive_devkit/src/autodrive_devkit/autodrive_roboracer/autodrive_bridge.py", line 334, in bridge
+    autodrive.lidar_range_array = np.fromstring(gzip.decompress(base64.b64decode(data["V1 LIDAR Range Array"])).decode('utf-8'), sep='\n')
+KeyError: 'V1 LIDAR Range Array'
+2026-10-24T20:39:29Z <Thread at 0x716e4beb4b80: <bound method Server._handle_event_internal of <socketio.server.Server object at 0x716e4dd28070>>(<socketio.server.Server object at 0x716e4dd28070>, 'cff228132bc9439585541e8b73b12942', ['Bridge', {'V1 Throttle': '0.0000', 'V1 Steering', '/', None)> failed with KeyError
+

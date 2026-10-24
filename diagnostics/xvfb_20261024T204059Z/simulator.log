@@ -1,0 +1,22 @@
+Preloaded 'lib_burst_generated.so'
+Preloaded 'libgrpc_csharp_ext.x64.so'
+Preloaded 'libusearch_c.so'
+Unable to preload the following plugins:
+	libRobotecGPULidar.so
+Display 0 'screen': 1280x720 (primary device).
+[PhysX] Initialized MultithreadedTaskDispatcher with 4 workers.
+Desktop is 1280 x 720 @ 0 Hz
+Initialize engine version: 2022.3.52f1 (1120fcb54228)
+[Subsystems] Discovering subsystems at path /tmp/feature1_simulator/Data/UnitySubsystems
+[Subsystems] No descriptors matched for  examples in UnitySubsystems/OculusXRPlugin/UnitySubsystemsManifest.json.
+[Subsystems] 1 'inputs' descriptors matched in UnitySubsystems/OculusXRPlugin/UnitySubsystemsManifest.json
+[Subsystems] 1 'displays' descriptors matched in UnitySubsystems/OculusXRPlugin/UnitySubsystemsManifest.json
+[Subsystems] No descriptors matched for  meshings in UnitySubsystems/OculusXRPlugin/UnitySubsystemsManifest.json.
+[Subsystems] No descriptors matched for  examples in UnitySubsystems/UnityOpenXR/UnitySubsystemsManifest.json.
+[Subsystems] 1 'inputs' descriptors matched in UnitySubsystems/UnityOpenXR/UnitySubsystemsManifest.json
+[Subsystems] 1 'displays' descriptors matched in UnitySubsystems/UnityOpenXR/UnitySubsystemsManifest.json
+[Subsystems] No descriptors matched for  meshings in UnitySubsystems/UnityOpenXR/UnitySubsystemsManifest.json.
+Forcing GfxDevice: OpenGL Core
+Forced GfxDevice 'OpenGL Core' was not built from editor, shaders will not be available
+PlayerInitEngineGraphics: InitializeEngineGraphics failed
+Failed to initialize player

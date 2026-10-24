@@ -1,0 +1,55 @@
+{
+  "feature": 1,
+  "automated_tests": {
+    "diagnostic_core": 20,
+    "ros_transport": 1,
+    "existing_controller": 20
+  },
+  "package_build": "passed_humble_isolated_workspace",
+  "focused_flake8": "passed",
+  "recording_finalized": true,
+  "live_bag_messages": 70642,
+  "initial_jsonl_records": 490,
+  "corrected_jsonl_records": 7,
+  "motion_yaw_z_min_max_rad_s": [
+    -3.651,
+    3.1045
+  ],
+  "event_counts": {
+    "receipt_gap": 328,
+    "simulator_reset_candidate": 1
+  },
+  "reset_events": [
+    {
+      "stream": "lap_count",
+      "event": "simulator_reset_candidate",
+      "previous": 5.0,
+      "current": 0.0,
+      "receipt_monotonic_s": 1587.721805229
+    }
+  ],
+  "stale_reports": 90,
+  "recovered_after_stale": true,
+  "corrected_latest_status": {
+    "lidar": "fresh",
+    "imu": "fresh",
+    "left_encoder": "fresh",
+    "right_encoder": "fresh",
+    "throttle": "fresh",
+    "steering": "fresh",
+    "lap_count": "fresh",
+    "lap_time": "fresh",
+    "last_lap_time": "fresh",
+    "best_lap_time": "fresh",
+    "collision_count": "fresh",
+    "odom": "fresh"
+  },
+  "simulator_connection": "User must manually press Connect after bridge startup/restart.",
+  "scope": "Passive diagnostics only; manual driving by user. No calibrated vehicle model.",
+  "remaining_uncertainties": [
+    "encoder units/gearing/wrapping",
+    "steering feedback units",
+    "transport gaps",
+    "IMU acceleration convention"
+  ]
+}

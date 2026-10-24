@@ -1,0 +1,13 @@
+Preloaded 'lib_burst_generated.so'
+Preloaded 'libgrpc_csharp_ext.x64.so'
+Preloaded 'libusearch_c.so'
+Unable to preload the following plugins:
+	libRobotecGPULidar.so
+Display 0 'screen': 1280x720 (primary device).
+[PhysX] Initialized MultithreadedTaskDispatcher with 4 workers.
+Desktop is 1280 x 720 @ 0 Hz
+[Vulkan init] extensions: count=2
+[Vulkan init] extensions: name=VK_EXT_debug_report [enabled=0, external=0]
+[Vulkan init] extensions: name=VK_EXT_debug_utils [enabled=0, external=0]
+Vulkan detection: 0
+No supported renderers found, exiting

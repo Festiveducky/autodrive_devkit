@@ -82,3 +82,9 @@ This directory hosts ROS 2 API (a meta-package), which supports modular algorith
   ```bash
   $ ros2 run autodrive_roboracer teleop_keyboard
   ```
+
+## Incremental racing development
+
+See [RACING_PROGRESS.md](RACING_PROGRESS.md) for feature status, acceptance criteria,
+and conceptual/math explanations. Follow [SIMULATOR_RUNBOOK.md](SIMULATOR_RUNBOOK.md)
+for the Windows simulator, Docker bridge, manual Connect step, and passive diagnostics.

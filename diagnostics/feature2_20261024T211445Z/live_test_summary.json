@@ -1,0 +1,25 @@
+{
+  "controller_paused": {
+    "gate_zero_delay_s": 0.2407743459998528,
+    "feedback_zero_delay_s": 0.29093984799965256,
+    "speed_below_0_05_delay_s": null
+  },
+  "controller_killed": {
+    "gate_zero_delay_s": 0.2665717959998801,
+    "feedback_zero_delay_s": 0.3665349440002501,
+    "speed_below_0_05_delay_s": 1.1665988390000166
+  },
+  "competing_publishers": {
+    "observed_samples": 61,
+    "all_zero": true,
+    "span_s": 3.00434704700001
+  },
+  "max_throttle_feedback": 0.11999999731779099,
+  "max_speed_m_s": 2.9780275166626655,
+  "collision_count_start_end": [
+    0,
+    0
+  ],
+  "max_collision_count": 0,
+  "artifacts": "/home/autodrive_devkit/src/autodrive_devkit/diagnostics/feature2_20261024T211445Z"
+}

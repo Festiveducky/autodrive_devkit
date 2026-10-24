@@ -1,8 +1,9 @@
 # Simulator and diagnostics runbook
 
 Last updated: 2026-10-24. This is the reproducible testing reference for future sessions.
-Read `RACING_PROGRESS.md` for the current feature and acceptance gate. Only Feature 1 is
-implemented. Existing controller behavior is retained.
+Read `RACING_PROGRESS.md` for the current feature and acceptance gate. Features 1 and 2
+are implemented and live-tested. Later features remain unstarted. The existing numerical
+gap-controller behavior is retained.
 
 ## Main workflow: user's Windows simulator and penn-challenge container
 
@@ -337,3 +338,172 @@ docker rm roboracer-feature1-live
 
 These commands stop/remove only the agent-created container; they leave bind-mounted
 logs intact. Recreate/start the preferred bridge and manually press Connect afterward.
+
+## Feature 2: watchdog with the retained gap follower
+
+Feature 2 is a bridge command gate, plus a temporary launch using the existing gap
+controller. It does not implement mapping, local odometry, or a measured-speed controller.
+Read the derivation and acceptance evidence in `RACING_PROGRESS.md`.
+
+### Normal bounded-throttle driving test
+
+1. Check `docker ps` and stop any old bridge before starting another on port 4567.
+2. Start Unity with the user's Windows command, reset to the track start, and select
+   Autonomous mode. The test controller starts driving as soon as valid scans arrive.
+3. Start the user's `penn-challenge` container with the existing bind mount and `-p 4567:4567`.
+4. Inside the container:
+
+```bash
+cd /home/autodrive_devkit
+source /opt/ros/humble/setup.bash
+colcon build --packages-select autodrive_roboracer
+source install/setup.bash
+ros2 launch autodrive_roboracer feature2_gap_test.launch.py \
+  max_throttle:=0.12 command_timeout:=0.25
+```
+
+This launch starts **both** the bridge and the existing wall-follow node. Do not also
+start `bringup_headless.launch.py`, another gap follower, or teleop alongside it. The
+bridge restricts commands to `/wall_follow_node`; the original YAML is loaded with a
+0.12 throttle override, leaving the normal saved tuning untouched.
+
+5. Press **Connect** manually in Unity when the bridge is ready. If Unity reconnects
+   automatically, confirm real telemetry rather than pressing Connect unnecessarily.
+6. Observe gate state from another sourced shell:
+
+```bash
+ros2 topic echo /autodrive/roboracer_1/command_status
+```
+
+`enabled: true` means an exclusive fresh command pair is available. It does not mean
+throttle must be nonzero: the follower can legitimately command zero for blocked/stale
+LiDAR. A second publisher on either command topic makes both outputs zero.
+
+The test launch shuts down its group if either main process exits. Ctrl+C stops the test.
+Stopping input removes propulsion and allows coasting; this is not calibrated braking.
+Use Autonomous mode for these actuator checks: Unity's Manual controls can produce
+feedback independently of the bridge's permitted command pair.
+
+### Agent fault-injection procedure
+
+For testing bridge survival after a controller crash, start bridge and follower as
+separate processes instead of the combined launch. This was the live acceptance method.
+Inside the sourced container, start the bridge in one terminal:
+
+```bash
+export PYTHONPATH=/home/autodrive_devkit/src/autodrive_devkit:$PYTHONPATH
+python3 -u -m autodrive_roboracer.autodrive_bridge --ros-args \
+  -p command_timeout:=0.25 -p command_owner:=/wall_follow_node
+```
+
+Press Connect after bridge startup; reset/select Autonomous before the driving phase.
+In a second sourced shell:
+
+```bash
+export PYTHONPATH=/home/autodrive_devkit/src/autodrive_devkit:$PYTHONPATH
+python3 -u -m autodrive_roboracer.wall_follow_node --ros-args \
+  --params-file /home/autodrive_devkit/src/autodrive_devkit/config/wall_follow.yaml \
+  -p max_throttle:=0.12 > /tmp/feature2_gap.log 2>&1 &
+controller_pid=$!
+```
+
+Use only the PID captured from that newly started test process. Do not use broad process
+name matching. Record status, feedback, odometry, collision count, and raw commands with
+rosbag before these tests:
+
+```bash
+kill -STOP "$controller_pid"   # no shutdown callback can send a stop
+# Observe command timeout and both normalized outputs zero.
+kill -CONT "$controller_pid"   # wait for fresh-pair recovery
+```
+
+While the normal follower is alive, another terminal can introduce a zero-valued competing
+publisher. The value itself cannot explain stopping: the bridge must report two publishers
+and disable the complete pair:
+
+```bash
+ros2 topic pub --rate 20 /autodrive/roboracer_1/throttle_command \
+  std_msgs/msg/Float32 '{data: 0.0}'
+```
+
+Ctrl+C the extra publisher. Confirm sole ownership and fresh-pair recovery. Finally:
+
+```bash
+kill -KILL "$controller_pid"   # no controller cleanup; bridge must expire commands
+```
+
+Confirm both bridge outputs and then actuator feedback become zero. Measure speed
+separately: coasting continues after zero throttle. Stop/finalize rosbag and diagnostics
+with SIGINT before removing a container. Ask the user to reset if the car hits an obstacle
+or a new test needs the start position. Do not implement later features as part of testing.
+
+### Reproducible automated checks
+
+Host PowerShell:
+
+```powershell
+$env:PYTHONPATH = (Resolve-Path autodrive_devkit).Path
+python -B -m unittest discover -s autodrive_devkit/test -p 'test_command_safety*.py' -v
+```
+
+In the sourced ROS container, preserve the ROS Python paths and use `python3`:
+
+```bash
+export PYTHONPATH=/home/autodrive_devkit/src/autodrive_devkit:$PYTHONPATH
+python3 -B -m unittest discover \
+  -s /home/autodrive_devkit/src/autodrive_devkit/test \
+  -p 'test_command_safety*.py' -v
+```
+
+Expected: 16 core tests and one actual ROS test. The ROS test remaps the command and
+status topics to `/feature2_test/*`, so it does not actuate the simulator. It uses the
+same Humble metadata-preserving executor as the real bridge. Also rerun the 20 retained
+gap-controller tests and the 21 diagnostics tests in ROS: **58 tests total**.
+
+Compatibility note: normal subscription callbacks in this image's rclpy do not expose
+DDS message metadata. Do not wire `CommandSafetyAdapter` to a standard executor: use
+`CommandSafetyExecutor`, which retains `take_message` timestamps for its command callbacks.
+The image does not expose a per-message publisher GID; ownership is checked through
+publisher discovery, with source-time rejection of pre-transition queued messages.
+
+The legacy keyboard teleop publishes on keystrokes rather than continuously. Its old
+nonzero command now expires after 0.25 seconds without another key-driven publication.
+The reused gap follower already refreshes both axes at 20 Hz. Do not increase the timeout
+to hide a controller that has stopped publishing; add a suitable command heartbeat when
+integrating another controller.
+
+### Live acceptance evidence
+
+Run directory: `diagnostics/feature2_20261024T211445Z/`. It contains bridge/controller
+logs, diagnostic JSONL, raw rosbag, `phases.jsonl`, 20 Hz `state_samples.jsonl`, and
+`live_test_summary.json`. The user reset the Windows simulator and selected Autonomous;
+all driving and fault injection after that were performed by the agent.
+
+- Max observed normalized throttle: 0.12; max observed speed: about 2.98 m/s.
+- Controller paused with SIGSTOP: gate output zero observed after 0.241 s; zero actuator
+  feedback after 0.291 s. The car was still coasting when resumed two seconds later.
+- Competitor: 61 samples over about 3 seconds reported two throttle publishers, with
+  both outputs zero throughout that detected conflict; fresh-pair operation resumed
+  after competitor removal.
+- Controller killed with SIGKILL: gate output zero observed after 0.267 s, actuator
+  feedback zero after 0.367 s, and measured speed below 0.05 m/s after about 1.17 s.
+- Collision count stayed **0** throughout the test.
+
+Timing values are observations sampled at 20 Hz, not tighter hard-real-time guarantees.
+The 0.25 s rule is evaluated at each final socket emission; observed status/feedback
+include sampling, scheduling, and transport delays. Background load also caused two
+expired-transport samples after the pause; those were rejected before normal operation
+recovered. No tire/friction or braking parameter was inferred from this test.
+
+Final artifacts: the raw bag has **52,228 messages over approximately 462 seconds**;
+the diagnostic JSONL has 453 records and ends in `session_end`. The command test's
+finite phase/observation logs are separate from the full-duration rosbag. Both setup
+time and post-test stationary time are included in the bag duration.
+
+Current end-of-Feature-2 state: the final bridge is running in the existing agent container
+`roboracer-feature1-live`, connected to Unity, with `command_timeout:=0.25` and
+`command_owner:=/wall_follow_node`. The controller, diagnostics, and bag recorder are
+stopped. No command publishers remain, and permitted output is zero. Check `docker ps`
+and `/command_status` to refresh this state in the next session. This container name is
+historical; it now hosts the Feature 2 bridge. Normal `penn-challenge` setup instructions
+above remain the preferred reproducible workflow.

@@ -1,0 +1,8 @@
+{"phase": "baseline_no_controller", "monotonic_s": 2512.250618074, "utc": "2026-10-24T21:16:03.276191+00:00"}
+{"phase": "gap_started", "monotonic_s": 2514.263773335, "utc": "2026-10-24T21:16:05.289336+00:00"}
+{"phase": "controller_paused", "monotonic_s": 2522.273769358, "utc": "2026-10-24T21:16:13.299336+00:00"}
+{"phase": "controller_resumed", "monotonic_s": 2524.280446472, "utc": "2026-10-24T21:16:15.306012+00:00"}
+{"phase": "competitor_starting", "monotonic_s": 2528.297244114, "utc": "2026-10-24T21:16:19.322807+00:00"}
+{"phase": "competitor_exited", "monotonic_s": 2532.296809325, "utc": "2026-10-24T21:16:23.318328+00:00"}
+{"phase": "controller_killed", "monotonic_s": 2536.301936848, "utc": "2026-10-24T21:16:27.323457+00:00"}
+{"phase": "test_finished", "monotonic_s": 2540.312193492, "utc": "2026-10-24T21:16:31.333713+00:00"}

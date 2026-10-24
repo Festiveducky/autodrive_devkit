@@ -1,0 +1,3 @@
+Connected!
+[INFO] [1792876958.102010786] [autodrive_bridge]: Command gate: enabled=False owner=None reason=need exactly one publisher per command topic
+[INFO] [1792876958.143751466] [autodrive_bridge]: Command gate: enabled=False owner=None reason=simulator connected; waiting for fresh pair

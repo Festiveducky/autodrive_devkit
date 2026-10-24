@@ -2,6 +2,7 @@
 
 import math
 import time
+import signal
 
 import rclpy
 from rclpy.executors import ExternalShutdownException
@@ -146,6 +147,8 @@ def main(args=None):
     """Initialize ROS, spin until interrupted, and release the node/context."""
     # Let Python raise KeyboardInterrupt before ROS destroys its context, so
     # finally can still publish a stop command on Ctrl+C.
+    signal.signal(signal.SIGINT, signal.default_int_handler)
+    signal.signal(signal.SIGTERM, signal.default_int_handler)
     rclpy.init(args=args, signal_handler_options=SignalHandlerOptions.NO)
     node = None
     try:

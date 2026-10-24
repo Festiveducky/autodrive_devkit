@@ -1,0 +1,33 @@
+Connected!
+[INFO] [1792876488.396879041] [autodrive_bridge]: Command gate: enabled=False owner=None reason=need exactly one publisher per command topic
+[INFO] [1792876488.445443327] [autodrive_bridge]: Command gate: enabled=False owner=None reason=simulator connected; waiting for fresh pair
+[INFO] [1792876566.160696645] [autodrive_bridge]: Command gate: enabled=False owner=/wall_follow_node reason=waiting for fresh command pair
+[INFO] [1792876566.243517799] [autodrive_bridge]: Command gate: enabled=True owner=/wall_follow_node reason=fresh exclusive command pair
+[INFO] [1792876573.547429490] [autodrive_bridge]: Command gate: enabled=False owner=/wall_follow_node reason=command timeout
+[INFO] [1792876575.960737116] [autodrive_bridge]: Command gate: enabled=True owner=/wall_follow_node reason=fresh exclusive command pair
+[INFO] [1792876576.306875853] [autodrive_bridge]: Command gate: enabled=False owner=/wall_follow_node reason=command timeout
+[INFO] [1792876576.621840300] [autodrive_bridge]: Command gate: enabled=False owner=/wall_follow_node reason=command already expired in transport
+[INFO] [1792876576.772159945] [autodrive_bridge]: Command gate: enabled=True owner=/wall_follow_node reason=fresh exclusive command pair
+[INFO] [1792876580.093544038] [autodrive_bridge]: Command gate: enabled=False owner=None reason=discarding command sent before ownership transition
+[INFO] [1792876580.160528842] [autodrive_bridge]: Command gate: enabled=False owner=None reason=need exactly one publisher per command topic
+[INFO] [1792876583.167823417] [autodrive_bridge]: Command gate: enabled=False owner=/wall_follow_node reason=discarding command sent before ownership transition
+[INFO] [1792876583.278432040] [autodrive_bridge]: Command gate: enabled=True owner=/wall_follow_node reason=fresh exclusive command pair
+[INFO] [1792876587.627630318] [autodrive_bridge]: Command gate: enabled=False owner=/wall_follow_node reason=command timeout
+[INFO] [1792876607.363973996] [autodrive_bridge]: Command gate: enabled=False owner=None reason=need exactly one publisher per command topic
+Traceback (most recent call last):
+  File "src/gevent/greenlet.py", line 906, in gevent._gevent_cgreenlet.Greenlet.run
+  File "/usr/local/lib/python3.10/dist-packages/socketio/server.py", line 640, in _handle_event_internal
+    r = server._trigger_event(data[0], namespace, sid, *data[1:])
+  File "/usr/local/lib/python3.10/dist-packages/socketio/server.py", line 669, in _trigger_event
+    return self.handlers[namespace][event](*args)
+  File "/home/autodrive_devkit/src/autodrive_devkit/autodrive_roboracer/autodrive_bridge.py", line 363, in bridge
+    publish_camera_images(autodrive.front_camera_image)
+  File "/home/autodrive_devkit/src/autodrive_devkit/autodrive_roboracer/autodrive_bridge.py", line 265, in publish_camera_images
+    publishers['pub_front_camera'].publish(create_image_msg(front_camera_image, "front_camera"))
+  File "/home/autodrive_devkit/src/autodrive_devkit/autodrive_roboracer/autodrive_bridge.py", line 190, in create_image_msg
+    img = cv_bridge.cv2_to_imgmsg(img, encoding="rgb8")
+  File "/opt/ros/humble/local/lib/python3.10/dist-packages/cv_bridge/core.py", line 271, in cv2_to_imgmsg
+    if encoding == 'passthrough':
+KeyboardInterrupt
+2026-10-24T21:22:33Z <Thread at 0x79beedbea680: <bound method Server._handle_event_internal of <socketio.server.Server object at 0x79beedb2bfd0>>(<socketio.server.Server object at 0x79beedb2bfd0>, 'b9e69fa88a7b45ae9a7ca3e264e22dce', ['Bridge', {'V1 Throttle': '0.0000', 'V1 Steering', '/', None)> failed with KeyboardInterrupt
+

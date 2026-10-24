@@ -30,6 +30,7 @@
 
 # ROS 2 module imports
 import rclpy # ROS 2 client library (rcl) for Python (built on rcl C API)
+from rclpy.signals import SignalHandlerOptions
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy # Quality of Service (tune communication between nodes)
 import tf2_ros # ROS bindings for tf2 library to handle transforms
 from std_msgs.msg import Int32, Float32, Header # Int32, Float32 and Header message classes
@@ -49,7 +50,9 @@ import base64 # Base64 binary-to-text encoding/decoding scheme
 from io import BytesIO # Manipulate bytes data in memory
 from PIL import Image # Python Imaging Library's (PIL's) Image module
 import gzip # Inbuilt module to compress and decompress data and files
+import signal
 import autodrive_roboracer.config as config # AutoDRIVE Ecosystem ROS 2 configuration for RoboRacer vehicle
+from autodrive_roboracer.command_safety_ros import CommandSafetyAdapter, CommandSafetyExecutor
 
 ################################################################################
 
@@ -87,6 +90,7 @@ class AutoDRIVE:
 # Global declarations
 global autodrive_bridge, cv_bridge, publishers, transform_broadcaster
 autodrive = AutoDRIVE()
+command_safety = None
 
 #########################################################
 # ROS 2 MESSAGE GENERATING FUNCTIONS
@@ -281,14 +285,6 @@ def publish_collision_count_data(collision_count):
 
 # VEHICLE DATA SUBSCRIBER CALLBACKS
 
-def callback_throttle_command(throttle_command_msg):
-    global autodrive
-    autodrive.throttle_command = float(np.round(throttle_command_msg.data, 3))
-
-def callback_steering_command(steering_command_msg):
-    global autodrive
-    autodrive.steering_command = float(np.round(steering_command_msg.data, 3))
-
 def callback_reset_command(reset_command_msg):
     global autodrive
     autodrive.reset_command = reset_command_msg.data
@@ -303,7 +299,15 @@ sio = socketio.Server(async_mode='gevent')
 # Registering "connect" event handler for the server
 @sio.on('connect')
 def connect(sid, environ):
+    if command_safety is not None:
+        command_safety.invalidate('simulator connected; waiting for fresh pair')
     print("Connected!")
+
+
+@sio.on('disconnect')
+def disconnect(sid):
+    if command_safety is not None:
+        command_safety.invalidate('simulator disconnected')
 
 # Registering "Bridge" event handler for the server
 @sio.on('Bridge')
@@ -368,8 +372,11 @@ def bridge(sid, data):
         # OUTGOING DATA
         ########################################################################
         # Vehicle and simulation commands
-        sio.emit('Bridge', data={'V1 Throttle': str(autodrive.throttle_command),
-                                 'V1 Steering': str(autodrive.steering_command),
+        state = command_safety.snapshot()
+        autodrive.throttle_command = state['throttle']
+        autodrive.steering_command = state['steering']
+        sio.emit('Bridge', data={'V1 Throttle': str(state['throttle']),
+                                 'V1 Steering': str(state['steering']),
                                  'V1 Reset': str(autodrive.reset_command)
                                  }
                 )
@@ -406,10 +413,14 @@ def bridge(sid, data):
 def main():
     # Global declarations
     global autodrive, autodrive_bridge, cv_bridge, publishers, transform_broadcaster
+    global command_safety
 
     # ROS 2 infrastructure
-    rclpy.init() # Initialize ROS 2 communication for this context
+    signal.signal(signal.SIGINT, signal.default_int_handler)
+    signal.signal(signal.SIGTERM, signal.default_int_handler)
+    rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
     autodrive_bridge = rclpy.create_node('autodrive_bridge') # Create ROS 2 node
+    command_safety = CommandSafetyAdapter(autodrive_bridge)
     qos_profile = QoSProfile( # Ouality of Service profile
         durability=QoSDurabilityPolicy.VOLATILE, # Volatile durability with no attempt made to persist samples
         reliability=QoSReliabilityPolicy.RELIABLE, # Reliable (not best effort) communication to guarantee that samples are delivered
@@ -421,8 +432,8 @@ def main():
     publishers = {e.name: autodrive_bridge.create_publisher(e.type, e.topic, qos_profile)
                   for e in config.pub_sub_dict.publishers} # Publishers
     callbacks = {
-        '/autodrive/roboracer_1/throttle_command': callback_throttle_command,
-        '/autodrive/roboracer_1/steering_command': callback_steering_command,
+        '/autodrive/roboracer_1/throttle_command': command_safety.throttle,
+        '/autodrive/roboracer_1/steering_command': command_safety.steering,
         '/autodrive/reset_command': callback_reset_command
     } # Subscriber callback functions
     [autodrive_bridge.create_subscription(e.type, e.topic, callbacks[e.topic], qos_profile) for e in config.pub_sub_dict.subscribers] # Subscribers
@@ -432,19 +443,26 @@ def main():
 
     # If num_threads is not specified then num_threads will be multiprocessing.cpu_count() if it is implemented
     # Otherwise it will use a single thread
-    executor = rclpy.executors.MultiThreadedExecutor() # Create an executor to control which thread callbacks get executed in
+    executor = CommandSafetyExecutor(command_safety)
     executor.add_node(autodrive_bridge) # Add node whose callbacks should be managed by this executor
 
     process = Thread(target=executor.spin, daemon=True) # Runs callbacks in the thread
     process.start() # Activate the thread as a demon (background process) and prompt it to the target function (spin the executor)
 
     app = socketio.WSGIApp(sio) # Create socketio WSGI application
-    pywsgi.WSGIServer(('', 4567), app, handler_class=WebSocketHandler).serve_forever() # Deploy as a gevent WSGI server
-    
-    # Cleanup
-    executor.shutdown() # Executor shutdown
-    autodrive_bridge.destroy_node() # Explicitly destroy the node
-    rclpy.shutdown() # Shutdown this context
+    server = pywsgi.WSGIServer(('', 4567), app, handler_class=WebSocketHandler)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        command_safety.invalidate('bridge shutdown')
+        sio.emit('Bridge', data={'V1 Throttle': '0.0', 'V1 Steering': '0.0', 'V1 Reset': 'False'})
+        server.stop(timeout=1)
+        executor.shutdown(timeout_sec=1)
+        autodrive_bridge.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 ################################################################################
 

@@ -18,7 +18,7 @@ stage. Minimum curvature is a geometric objective, not proof of minimum lap time
 | # | Feature | Implemented | Automated checks | Simulator validated | Gate / next evidence |
 |---|---|---|---|---|---|
 | 1 | Passive sensor diagnostics and recording | Yes | 20 numerical tests + 1 ROS transport test; package build; focused lint | Yes, with user's Windows simulator/manual driving | Review evidence below; do not start Feature 2 until review |
-| 2 | Bridge command watchdog and exclusive command ownership | No | Pending | Pending | Expired commands cannot retain throttle |
+| 2 | Bridge command watchdog and exclusive command ownership | Yes | 16 core tests + ROS transport test; build/lint; 58 regressions total | Yes | Review live evidence; Feature 3 remains unstarted |
 | 3 | Encoder/LiDAR/IMU local odometry and TF ownership | No | Pending | Pending | Correct scale/signs, scan degeneracy handling, one TF parent |
 | 4 | Slow measured-speed mapping controller | No | Pending | Pending | Low-speed tracking and stopping, initial acceleration/coasting data |
 | 5 | SLAM Toolbox mapping, saving, localization | No | Pending | Pending | Closed consistent map and relocalization |
@@ -196,9 +196,9 @@ events and occasionally stale health. Publication frequency is therefore not gua
 40 Hz even though LiDAR advertises a 0.025 s scan time. Investigate timing/focus/transport
 before choosing future control watchdogs; do not hide this by labeling all scans fresh.
 
-Recording has stopped and files are finalized. The agent's bridge in
+At the end of Feature 1, recording stopped and files were finalized. The agent's bridge in
 `roboracer-feature1-live` remains running on host port 4567 so the user's simulator can
-stay connected. No new watchdog, localization, or driving behavior was added.
+stay connected. No new watchdog, localization, or driving behavior was added in Feature 1.
 
 ### Remaining uncertainties / exact next step
 
@@ -206,7 +206,167 @@ Encoder scale, wrapping/gearing, actual sensor refresh rate, IMU acceleration co
 and model-specific reset visibility are unverified. No localization, mapping, vehicle
 model, speed control, or MPC behavior is implemented by this feature.
 
-**Next action: review the completed Feature 1 simulator evidence above.** Only after
-its acceptance review, implement Feature 2 (bridge command
-watchdog). For each subsequent feature add its own derivation, failure modes, test
-commands, evidence, and review gate here.
+Feature 1 was accepted for the next iteration by the user's explicit request to implement
+Feature 2 and reuse the existing gap follower for live tests.
+
+## Feature 2: bridge command watchdog and exclusive controller
+
+### Implemented behavior
+
+The bridge now passes every outgoing throttle/steering pair through `CommandSafety`.
+Both values default to zero. Nonzero commands require all of the following:
+
+1. Exactly one ROS publisher exists on each driving-command topic.
+2. Both publishers belong to the same fully qualified ROS node name.
+3. That node matches `command_owner` if an owner was configured.
+4. Both commands are finite, inside [-1, 1], and younger than `command_timeout`.
+5. Both commands were sent after the latest publisher-ownership transition.
+
+The default timeout is **0.25 seconds**. Discovering another publisher, losing a
+publisher, changing endpoint identities, receiving invalid/old data, timing out, or
+disconnecting Unity invalidates both channels. Recovery requires a fresh valid pair;
+old steering cannot be combined with a new throttle after a fault.
+
+`/autodrive/roboracer_1/command_status` publishes JSON in `std_msgs/String` at a nominal
+20 Hz. It reports the resolved owner, publisher counts, reason, command ages, and the
+currently allowed normalized output pair. State changes are logged in the bridge.
+The check runs again immediately before each Socket.IO response to Unity, not only in
+the ROS timer. Existing Float32 command topic names remain supported.
+
+Parameters on `autodrive_bridge`:
+
+- `command_timeout`: positive finite seconds, default 0.25.
+- `command_owner`: empty for any unique common controller, or a fully qualified name
+  such as `/wall_follow_node` to restrict the controller.
+
+### Reused temporary driving algorithm
+
+`feature2_gap_test.launch.py` starts one bridge and the existing `WallFollowNode` with
+its original `gap_controller.compute_command`. It loads the retained YAML and overrides
+only `max_throttle` to **0.12** by default. Normal controller defaults remain unchanged.
+The bridge is configured for `/wall_follow_node`. Do not start another bridge with it.
+The test launch shuts its group down if either controller or bridge exits.
+
+The retained algorithm inflates LiDAR obstacles for clearance, chooses a broad/deep
+opening, and uses a pure-pursuit steering geometry. For a target angle alpha at lookahead
+distance ell and wheelbase L, its nominal steering angle is:
+
+```text
+delta = atan2(2 * L * sin(alpha), ell)
+```
+
+This follows from the curvature of a circle passing through the target,
+`kappa = 2 * sin(alpha) / ell`, and the bicycle relation `tan(delta) = L * kappa`.
+Existing sharp-turn gains and throttle reduction are reused. The 0.12 test cap is a
+normalized actuator input, not a speed in m/s. This is temporary mapless test driving;
+Feature 4's measured-speed mapping controller is not implemented here.
+
+Only signal handling was adjusted in the wall-follow ROS wrapper: Ctrl+C/SIGTERM now
+works from detached test processes and reaches its existing zero-command finalizer.
+The numerical driving algorithm and retained tuning were not changed.
+
+### Watchdog mathematics and failure behavior
+
+Let T be the timeout, t the monotonic evaluation time, and t_c the effective source time
+of the newest accepted command on channel c. Each channel's age is:
+
+```text
+age_c(t) = t - t_c
+safe_pair = exclusive_owner AND age_throttle <= T AND age_steering <= T
+output = latest_pair if safe_pair else (0, 0)
+```
+
+At receipt, DDS reports when the publisher sent its message. Compute transport age with
+the system clock, then project that duration onto the monotonic clock:
+
+```text
+transport_age = system_now - DDS_source_timestamp
+t_c = monotonic_receipt_time - max(0, transport_age)
+```
+
+Thus a message that spent 0.20 seconds queued has only 0.05 seconds left when T=0.25;
+its arrival does not renew it for another full timeout. Nonfinite timestamps, commands
+already older than T, or source clocks more than 0.05 seconds ahead are rejected. This
+local Windows/Docker setup shares a system clock; distributed machines require synchronized
+clocks before using this source-age policy. ROS simulated time is not used for expiry.
+
+The follower normally publishes both axes every 0.05 seconds (20 Hz), so T permits about
+five missed command periods. This is separate from its existing 0.5-second LiDAR freshness
+check. A live follower with stale LiDAR publishes a fresh zero pair; a dead follower
+publishes nothing, so the bridge independently expires its last pair.
+
+Publisher graph changes are sampled by the timer, command callbacks, and final socket
+check. Ownership enforcement is subject to ROS/DDS discovery latency. A discovered
+competitor is rejected even if it has not sent a value. Endpoint GIDs distinguish a
+restarted publisher from the previous instance even when its node name is unchanged.
+Any ownership transition discards queued commands sent before that transition.
+
+This pinned Humble rclpy discards metadata in normal callbacks. `CommandSafetyExecutor`
+preserves the DDS timestamps from `take_message` only for the two command subscriptions;
+all other subscriptions keep the normal executor behavior. The runtime does **not** expose
+a per-message publisher GID, so source ownership is enforced through the graph rather
+than claiming a per-message identity check. The ROS integration test exercises this
+compatibility path on isolated, non-actuating topics. Recheck this small executor adapter
+when upgrading rclpy.
+
+Both the ROS executor and socket callback can access the command state. A reentrant lock
+makes invalidation, acceptance, and snapshot evaluation consistent across those threads.
+This provides one validated output pair; the legacy two Float32 messages are still not
+an atomic combined-command protocol.
+
+Zero throttle removes driving input; it does **not** guarantee zero velocity or active
+braking. Unity applies the checked pair on the next bridge exchange. If incoming simulator
+packets stop, the last checked input cannot be delivered until transport resumes. A dead
+bridge or disconnected simulator is outside an in-bridge watchdog's ability to command.
+Physical braking capability and stopping-distance guarantees remain later work.
+
+### Feature 2 acceptance and evidence
+
+- [x] 16 core tests: both-channel expiry, transport age, invalid input, owner mismatch,
+  competing publishers, endpoint restart, disconnect invalidation, and fresh-pair recovery.
+- [x] Real ROS test: DDS timing through the pinned Humble executor, exclusive publisher
+  discovery, timeout, competing publisher without a value, removal, and fresh recovery.
+- [x] Final package builds in an isolated Humble workspace; installed test launch imports
+  and creates its six actions. Focused style checks pass. All **58 tests** pass in ROS:
+  20 retained gap-controller tests, 20 diagnostic-core tests, one diagnostic ROS test,
+  16 command-safety core tests, and one command-safety ROS test.
+- [x] Reused gap follower moves and steers under the 0.12 normalized throttle cap.
+- [x] SIGSTOP and SIGKILL tests cause zero output without controller shutdown callbacks.
+- [x] Two competing command publishers block both outputs; fresh operation recovers
+  after removing the competitor.
+- [x] Telemetry, physical coasting, and feedback checked; logs and bag finalized.
+
+### Feature 2 live evidence
+
+Artifacts: `diagnostics/feature2_20261024T211445Z/`, including `phases.jsonl`,
+`state_samples.jsonl`, `live_test_summary.json`, `bag_info.txt`, bridge/controller logs,
+diagnostic JSONL, and the raw bag. The bag contains **52,228 messages** over approximately
+462 seconds; the finalized diagnostic JSONL contains 453 records. All artifacts remain
+in the Windows bind mount. These counts include setup and post-test stationary time.
+
+The user reset the car and selected Autonomous. The agent then drove the retained
+controller and injected process/publisher faults. Maximum observed throttle was 0.12,
+maximum speed about 2.98 m/s, and collision count stayed **0** throughout the test.
+
+| Case | Gate zero observed | Zero actuator feedback | Physical result |
+|---|---|---|---|
+| SIGSTOP controller | 0.241 s after pause | 0.291 s | Still coasting when resumed after 2 s |
+| Competing publisher | Both outputs zero for all 61 detected-conflict samples | Observed zero during conflict | Fresh control recovered on removal |
+| SIGKILL controller | 0.267 s after kill | 0.367 s | Speed below 0.05 m/s after 1.17 s |
+
+Samples are collected at nominal 20 Hz. Displayed delays include sample/scheduler and
+transport latency; they are measurements, not hard-real-time guarantees. The gate's
+0.25-second rule remains independently enforced at actual socket emission. Two delayed
+command samples after resuming were rejected rather than treated as new live commands.
+This run validates command expiry and exclusive publisher behavior, not calibrated
+braking, optimal speed, or whole-lap navigation performance.
+
+After testing, diagnostics and rosbag were cleanly stopped and the controller was removed.
+The final bridge code was restarted and reconnected in `roboracer-feature1-live` with
+`command_timeout:=0.25` and `command_owner:=/wall_follow_node`. It remains connected on
+port 4567 with no command publishers and zero permitted output. `gap_controller.py`
+remains unchanged. See the runbook for the combined test launch and separate-process
+crash-test procedure.
+
+**Next action:** review completed Feature 2 evidence with the user. Feature 3 (local
+odometry) remains unstarted.
